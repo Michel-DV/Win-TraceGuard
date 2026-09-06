@@ -1,12 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="570" viewBox="0 0 1200 570">
   <rect width="1200" height="570" rx="24" fill="#0d1117"/><rect x="24" y="24" width="1152" height="522" rx="15" fill="#010409" stroke="#30363d"/>
   <circle cx="55" cy="53" r="7" fill="#ff7b72"/><circle cx="80" cy="53" r="7" fill="#d29922"/><circle cx="105" cy="53" r="7" fill="#3fb950"/>
-  <text x="140" y="59" font-family="Consolas,monospace" font-size="16" fill="#8b949e">PowerShell — TraceGuard live capture preview</text>
+  <text x="140" y="59" font-family="Consolas,monospace" font-size="16" fill="#8b949e">PowerShell — TraceGuard C11 live capture preview</text>
   <g font-family="Consolas,monospace" font-size="18">
     <text x="50" y="110" fill="#7ee787">PS C:\Tools\TraceGuard&gt;</text><text x="330" y="110" fill="#f0f6fc"> .\traceguard.exe capture --seconds 15 --jsonl trace.jsonl</text>
-    <text x="50" y="150" fill="#58a6ff">Win-TraceGuard 1.0.0 | Windows ETW telemetry &amp; detection sensor</text>
-    <text x="50" y="184" fill="#c9d1d9">[+] Provider: Microsoft-Windows-Kernel-Process</text>
-    <text x="50" y="216" fill="#c9d1d9">[+] Duration: 15s</text><text x="50" y="248" fill="#c9d1d9">[+] JSONL: trace.jsonl</text>
+    <text x="50" y="150" fill="#58a6ff">Win-TraceGuard 1.0.1 | Windows ETW telemetry &amp; detection sensor | C11</text>
+    <text x="50" y="184" fill="#c9d1d9">[+] Session: WinTraceGuard realtime session</text>
+    <text x="50" y="216" fill="#c9d1d9">[+] Provider: Microsoft-Windows-Kernel-Process</text>
+    <text x="50" y="248" fill="#c9d1d9">[+] Duration: 15s | JSONL: trace.jsonl</text>
     <text x="50" y="298" fill="#8b949e">[EVT ] 2026-09-06T14:11:04.322Z process_start pid=4112 ppid=4100</text>
     <text x="50" y="330" fill="#f0f6fc">      image="C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"</text>
     <text x="50" y="375" fill="#ff7b72">[HIGH] TG1002 | Office application spawned a command or script interpreter</text>
