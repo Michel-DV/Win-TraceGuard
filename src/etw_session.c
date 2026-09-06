@@ -2,6 +2,7 @@
 
 #include <tdh.h>
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -181,7 +182,7 @@ static int tg_wide_to_utf8(const wchar_t* value, size_t length, char* output, si
     if (output == NULL || capacity == 0) return 0;
     output[0] = '\0';
     if (value == NULL || length == 0) return 1;
-    if (length > (size_t)INT_MAX) return 0;
+    if (length > (size_t)INT_MAX || capacity - 1 > (size_t)INT_MAX) return 0;
 
     written = WideCharToMultiByte(
         CP_UTF8,
@@ -224,17 +225,21 @@ static int tg_read_text(
         } else {
             size_t length = 0;
             while (length < size && bytes[length] != 0) ++length;
-            if (length != 0) {
+            if (length != 0 && length <= (size_t)INT_MAX) {
                 int wide_length = MultiByteToWideChar(CP_ACP, 0, (const char*)bytes, (int)length, NULL, 0);
                 if (wide_length > 0) {
                     wchar_t* wide = (wchar_t*)calloc((size_t)wide_length + 1, sizeof(wchar_t));
-                    if (wide != NULL && MultiByteToWideChar(CP_ACP, 0, (const char*)bytes, (int)length, wide, wide_length) > 0) {
-                        int ok = tg_wide_to_utf8(wide, (size_t)wide_length, output, capacity);
-                        free(wide);
-                        free(bytes);
-                        if (ok) return 1;
-                    } else {
-                        free(wide);
+                    if (wide != NULL) {
+                        if (MultiByteToWideChar(CP_ACP, 0, (const char*)bytes, (int)length, wide, wide_length) > 0) {
+                            int ok = tg_wide_to_utf8(wide, (size_t)wide_length, output, capacity);
+                            free(wide);
+                            if (ok) {
+                                free(bytes);
+                                return 1;
+                            }
+                        } else {
+                            free(wide);
+                        }
                     }
                 }
             }
@@ -271,15 +276,16 @@ static void tg_format_timestamp(const LARGE_INTEGER* timestamp, char* output, si
 
 static TgEventKind tg_classify_event(EVENT_RECORD* record, const char* command_line, const char* image) {
     UCHAR opcode = record->EventHeader.EventDescriptor.Opcode;
-    if ((command_line != NULL && command_line[0] != '\0') ||
-        tg_has_property(record, L"ParentProcessID") ||
-        tg_has_property(record, L"ParentId")) {
-        return TG_EVENT_PROCESS_START;
-    }
+
     if (opcode == EVENT_TRACE_TYPE_END || opcode == 2) return TG_EVENT_PROCESS_STOP;
     if (image != NULL && image[0] != '\0' &&
         (tg_has_property(record, L"ImageBase") || tg_has_property(record, L"ImageSize"))) {
         return TG_EVENT_IMAGE_LOAD;
+    }
+    if ((command_line != NULL && command_line[0] != '\0') ||
+        tg_has_property(record, L"ParentProcessID") ||
+        tg_has_property(record, L"ParentId")) {
+        return TG_EVENT_PROCESS_START;
     }
     if (opcode == EVENT_TRACE_TYPE_START || opcode == 1) return TG_EVENT_PROCESS_START;
     return TG_EVENT_OTHER;
@@ -409,6 +415,10 @@ int tg_etw_session_start(TgEtwSession* session, char* error, size_t error_capaci
 
     if (session == NULL) {
         tg_set_error(error, error_capacity, "Invalid ETW session.");
+        return 0;
+    }
+    if (session->process_entries == NULL || session->process_capacity == 0) {
+        tg_set_error(error, error_capacity, "ETW process-correlation state could not be allocated.");
         return 0;
     }
     if (session->session_handle != 0) {
