@@ -1,0 +1,10 @@
+/build/
+/out/
+/.vs/
+*.suo
+*.user
+*.VC.db
+*.VC.opendb
+*.etl
+*.jsonl
+!samples/*.jsonl
