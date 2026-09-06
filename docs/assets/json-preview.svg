@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="455" viewBox="0 0 1200 455">
+  <rect width="1200" height="455" rx="24" fill="#0d1117"/><rect x="24" y="24" width="1152" height="407" rx="15" fill="#010409" stroke="#30363d"/>
+  <circle cx="55" cy="53" r="7" fill="#ff7b72"/><circle cx="80" cy="53" r="7" fill="#d29922"/><circle cx="105" cy="53" r="7" fill="#3fb950"/>
+  <text x="140" y="59" font-family="Consolas,monospace" font-size="16" fill="#8b949e">JSONL evidence stream</text>
+  <g font-family="Consolas,monospace" font-size="16">
+    <text x="48" y="115" fill="#f0f6fc">{</text>
+    <text x="75" y="147" fill="#79c0ff">"type"</text><text x="135" y="147" fill="#f0f6fc">: </text><text x="153" y="147" fill="#a5d6ff">"event"</text><text x="213" y="147" fill="#f0f6fc">,</text>
+    <text x="75" y="179" fill="#79c0ff">"kind"</text><text x="135" y="179" fill="#f0f6fc">: </text><text x="153" y="179" fill="#a5d6ff">"process_start"</text><text x="285" y="179" fill="#f0f6fc">,</text>
+    <text x="75" y="211" fill="#79c0ff">"pid"</text><text x="125" y="211" fill="#f0f6fc">: </text><text x="143" y="211" fill="#d2a8ff">4112</text><text x="183" y="211" fill="#f0f6fc">,</text>
+    <text x="75" y="243" fill="#79c0ff">"ppid"</text><text x="135" y="243" fill="#f0f6fc">: </text><text x="153" y="243" fill="#d2a8ff">4100</text><text x="193" y="243" fill="#f0f6fc">,</text>
+    <text x="75" y="275" fill="#79c0ff">"image"</text><text x="145" y="275" fill="#f0f6fc">: </text><text x="163" y="275" fill="#a5d6ff">"C:\\Windows\\System32\\...\\powershell.exe"</text><text x="575" y="275" fill="#f0f6fc">,</text>
+    <text x="75" y="307" fill="#79c0ff">"parent_image"</text><text x="205" y="307" fill="#f0f6fc">: </text><text x="223" y="307" fill="#a5d6ff">"...\\WINWORD.EXE"</text><text x="405" y="307" fill="#f0f6fc">,</text>
+    <text x="75" y="339" fill="#79c0ff">"command_line"</text><text x="205" y="339" fill="#f0f6fc">: </text><text x="223" y="339" fill="#a5d6ff">"powershell.exe -EncodedCommand SQBFAFgA"</text>
+    <text x="48" y="371" fill="#f0f6fc">}</text>
+    <text x="48" y="407" fill="#8b949e">Flat, replayable schema designed for hunting notebooks, scripts and regression tests.</text>
+  </g>
+</svg>
