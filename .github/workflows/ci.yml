@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-msvc:
+    name: Windows / MSVC / x64
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure
+        run: cmake -S . -B build -A x64 -DTRACEGUARD_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Unit tests
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Version smoke test
+        run: .\build\Release\traceguard.exe --version
+
+      - name: Provider configuration smoke test
+        run: .\build\Release\traceguard.exe providers
+
+      - name: Detection replay smoke test
+        shell: pwsh
+        run: |
+          $output = & .\build\Release\traceguard.exe replay .\samples\demo-events.jsonl --json
+          $output | Write-Host
+          if (-not ($output -match 'TG1002')) { throw 'Expected TG1002 in replay output' }
+          if (-not ($output -match 'TG1003')) { throw 'Expected TG1003 in replay output' }
+          if (-not ($output -match 'TG1001')) { throw 'Expected TG1001 in replay output' }
+          if (-not ($output -match 'TG2001')) { throw 'Expected TG2001 in replay output' }

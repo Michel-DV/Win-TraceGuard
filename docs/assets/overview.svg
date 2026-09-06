@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <rect width="1200" height="520" rx="28" fill="#0d1117"/>
+  <text x="60" y="70" font-family="Segoe UI,Arial" font-size="30" font-weight="700" fill="#f0f6fc">Win-TraceGuard — telemetry pipeline</text>
+  <text x="60" y="105" font-family="Segoe UI,Arial" font-size="16" fill="#8b949e">Native Windows ETW collection → normalization → correlation → detections → analyst output</text>
+  <g font-family="Segoe UI,Arial" text-anchor="middle">
+    <rect x="60" y="180" width="220" height="150" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+    <text x="170" y="225" font-size="22" font-weight="700" fill="#58a6ff">ETW</text>
+    <text x="170" y="260" font-size="15" fill="#c9d1d9">Kernel-Process</text>
+    <text x="170" y="286" font-size="15" fill="#c9d1d9">StartTrace / TDH</text>
+    <text x="170" y="312" font-size="15" fill="#8b949e">read-only sensor</text>
+    <rect x="350" y="180" width="220" height="150" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+    <text x="460" y="225" font-size="22" font-weight="700" fill="#7ee787">Normalize</text>
+    <text x="460" y="260" font-size="15" fill="#c9d1d9">process_start</text>
+    <text x="460" y="286" font-size="15" fill="#c9d1d9">image_load</text>
+    <text x="460" y="312" font-size="15" fill="#8b949e">flat event model</text>
+    <rect x="640" y="180" width="220" height="150" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+    <text x="750" y="225" font-size="22" font-weight="700" fill="#d2a8ff">Detect</text>
+    <text x="750" y="260" font-size="15" fill="#c9d1d9">parent/child</text>
+    <text x="750" y="286" font-size="15" fill="#c9d1d9">command-line rules</text>
+    <text x="750" y="312" font-size="15" fill="#8b949e">explainable findings</text>
+    <rect x="930" y="180" width="210" height="150" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+    <text x="1035" y="225" font-size="22" font-weight="700" fill="#ffa657">Output</text>
+    <text x="1035" y="260" font-size="15" fill="#c9d1d9">console</text>
+    <text x="1035" y="286" font-size="15" fill="#c9d1d9">JSONL</text>
+    <text x="1035" y="312" font-size="15" fill="#8b949e">replay workflow</text>
+  </g>
+  <g stroke="#8b949e" stroke-width="3" fill="none"><path d="M280 255 H340"/><path d="M570 255 H630"/><path d="M860 255 H920"/></g>
+  <g fill="#8b949e"><path d="M340 255 l-12 -7 v14 z"/><path d="M630 255 l-12 -7 v14 z"/><path d="M920 255 l-12 -7 v14 z"/></g>
+  <text x="60" y="430" font-family="Segoe UI,Arial" font-size="15" fill="#8b949e">Design goal: make Windows telemetry readable, replayable and testable without modifying observed processes.</text>
+</svg>
