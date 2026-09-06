@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="470" viewBox="0 0 1200 470">
+  <rect width="1200" height="470" rx="24" fill="#0d1117"/><rect x="24" y="24" width="1152" height="422" rx="15" fill="#010409" stroke="#30363d"/>
+  <circle cx="55" cy="53" r="7" fill="#ff7b72"/><circle cx="80" cy="53" r="7" fill="#d29922"/><circle cx="105" cy="53" r="7" fill="#3fb950"/>
+  <text x="140" y="59" font-family="Consolas,monospace" font-size="16" fill="#8b949e">Detection replay — deterministic rule testing</text>
+  <g font-family="Consolas,monospace" font-size="18">
+    <text x="50" y="110" fill="#7ee787">PS&gt;</text><text x="100" y="110" fill="#f0f6fc"> .\traceguard.exe replay .\samples\demo-events.jsonl</text>
+    <text x="50" y="160" fill="#ff7b72">[HIGH] TG1002 | Office application spawned a command or script interpreter | pid=4112</text>
+    <text x="50" y="205" fill="#ff7b72">[HIGH] TG1003 | PowerShell command line contains an encoded-command switch | pid=4112</text>
+    <text x="50" y="250" fill="#d29922">[MED ] TG1001 | Executable started from a user-writable location | pid=4128</text>
+    <text x="50" y="295" fill="#d29922">[MED ] TG2001 | Image loaded from a user-writable location | pid=4128</text>
+    <text x="50" y="355" fill="#7ee787">Replay summary: 5 events, 4 findings.</text>
+    <text x="50" y="397" fill="#8b949e">Same normalized telemetry + new rules = repeatable detection regression tests.</text>
+  </g>
+</svg>
