@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "refactor/**"]
   pull_request:
     branches: [main]
 
@@ -11,13 +11,29 @@ permissions:
 
 jobs:
   windows-msvc:
-    name: Windows / MSVC / x64
+    name: Windows / MSVC / x64 / C11
     runs-on: windows-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Pure C source audit
+        shell: pwsh
+        run: |
+          $cpp = @(Get-ChildItem -Recurse -File -Include *.cpp,*.cc,*.cxx,*.hpp,*.hh)
+          if ($cpp.Count -ne 0) {
+            $cpp | ForEach-Object { Write-Host $_.FullName }
+            throw 'C++ source/header files are not allowed in the pure-C TraceGuard tree.'
+          }
+          $cmake = Get-Content .\CMakeLists.txt -Raw
+          if ($cmake -match 'LANGUAGES\s+CXX' -or $cmake -match 'CMAKE_CXX_') {
+            throw 'CMake still contains C++ language configuration.'
+          }
+          if ($cmake -notmatch 'LANGUAGES\s+C' -or $cmake -notmatch 'CMAKE_C_STANDARD\s+11') {
+            throw 'CMake is not explicitly configured for C11.'
+          }
 
       - name: Configure
         run: cmake -S . -B build -A x64 -DTRACEGUARD_BUILD_TESTS=ON
@@ -29,7 +45,11 @@ jobs:
         run: ctest --test-dir build -C Release --output-on-failure
 
       - name: Version smoke test
-        run: .\build\Release\traceguard.exe --version
+        shell: pwsh
+        run: |
+          $version = & .\build\Release\traceguard.exe --version
+          $version | Write-Host
+          if (-not ($version -match 'C11')) { throw 'Version output must identify the C11 implementation.' }
 
       - name: Provider configuration smoke test
         run: .\build\Release\traceguard.exe providers

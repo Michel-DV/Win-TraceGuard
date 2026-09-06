@@ -1,6 +1,6 @@
 # Architecture
 
-Win-TraceGuard is split into four intentionally small layers so the project can be read, tested and extended without turning the ETW callback into a monolith.
+Win-TraceGuard is split into small C11 modules so the ETW callback remains an ingestion boundary rather than becoming the entire application.
 
 ```text
 Microsoft-Windows-Kernel-Process
@@ -11,50 +11,110 @@ Microsoft-Windows-Kernel-Process
  OpenTrace / ProcessTrace / TDH
               |
               v
-       Normalized Event model
- process_start / process_stop / image_load
+          TgEvent
+ bounded normalized C structure
               |
         +-----+------+
         |            |
         v            v
- Correlation state   JSONL recorder
+ PID correlation     JSONL recorder
         |
         v
-   Detection engine
+   C rule engine
         |
         v
-      Findings
+     TgFinding
  console / JSONL / replay
 ```
 
+## Module layout
+
+| Module | Responsibility |
+|---|---|
+| `src/etw_session.c` | ETW/TDH lifecycle, provider resolution, property decoding and normalization |
+| `src/event.c` | event/finding initialization and safe string helpers |
+| `src/rule_engine.c` | transient PID state and explainable detection heuristics |
+| `src/jsonl.c` | bounded serializer plus narrow replay parser |
+| `src/main.c` | CLI, output, capture timeout and top-level ownership |
+
+Public interfaces are plain `.h` files under `include/traceguard/`.
+
+## C11 ownership model
+
+The project deliberately uses explicit C ownership rather than constructors, exceptions or RAII.
+
+- `TgEtwSession` is initialized with `tg_etw_session_init()` and released with `tg_etw_session_dispose()`.
+- `TgRuleEngine` owns its transient process table after `tg_rule_engine_init()` and frees it with `tg_rule_engine_dispose()`.
+- `TgJsonlWriter` owns a `FILE*` only while it is open.
+- temporary TDH property buffers are allocated inside the ETW layer, copied into bounded normalized fields and freed before the callback returns.
+- Win32 handles created by the CLI are closed explicitly on every exit path.
+
+This makes resource ownership visible during code review.
+
 ## ETW collection layer
 
-`src/etw_session.cpp` owns the realtime ETW session. The provider GUID is resolved dynamically by provider name through `TdhEnumerateProviders`, avoiding a magic GUID in the source tree. The session is created with `StartTraceW`, the provider is enabled with `EnableTraceEx2`, and records are consumed with `OpenTraceW` + `ProcessTrace`.
+`src/etw_session.c` owns the realtime ETW session. The provider GUID is resolved dynamically by provider name with `TdhEnumerateProviders`, avoiding a magic GUID in the source tree. The session is created with `StartTraceW`, enabled with `EnableTraceEx2`, and consumed through `OpenTraceW` + `ProcessTrace`.
 
-The event payload is decoded with the Trace Data Helper API (`TdhGetPropertySize` / `TdhGetProperty`). TraceGuard intentionally asks for a short list of named properties such as `ProcessID`, `ParentProcessID`, `ImageName`, `CommandLine`, `ImageBase` and `ImageSize`. Missing properties do not crash the sensor; they simply produce a partial event.
+The event payload is decoded with `TdhGetPropertySize` / `TdhGetProperty`. Property allocations are capped, and only a bounded set of useful fields is normalized, including process ID, parent process ID, image path, command line and image-load metadata.
+
+Property presence can vary across Windows builds and event versions. Missing fields are treated as partial telemetry rather than fatal parser errors.
 
 ## Normalization layer
 
-Native ETW events are normalized into the `traceguard::Event` structure. The detection engine never consumes raw ETW pointers. This boundary makes the rule engine deterministic and replayable.
+Raw `EVENT_RECORD` pointers never enter the detection engine. The ETW layer copies accepted values into `TgEvent`, which contains fixed-capacity fields for timestamps, provider names, paths and command lines.
 
-The v1 event kinds are `process_start`, `process_stop`, `image_load`, and `other`.
+The normalized event kinds are:
 
-Process ancestry is enriched with a small in-memory PID-to-image map. The map is removed on process-stop events and is not persisted.
+- `TG_EVENT_PROCESS_START`
+- `TG_EVENT_PROCESS_STOP`
+- `TG_EVENT_IMAGE_LOAD`
+- `TG_EVENT_OTHER`
+
+Explicit process-stop and image-load evidence is classified before heuristic process-start inference so a stop record carrying parent metadata is not accidentally retained as a new process.
+
+## Correlation state
+
+Both the collector and rule engine use small transient PID-to-image tables for context. The rule-engine table exists so replay data can reproduce parent/child correlation without ETW.
+
+Entries are removed on process-stop events. State is bounded and memory-only; it is not persisted.
 
 ## Detection layer
 
-`RuleEngine` evaluates explicit, explainable heuristics. It does not execute payloads, inspect remote process memory, inject code, block processes or modify the endpoint. Findings are analyst triage signals, not malware verdicts.
+`tg_rule_engine_evaluate()` receives a normalized `TgEvent` and writes zero or more `TgFinding` structures into a caller-provided bounded array.
 
-The detection engine can consume both live ETW events and a JSONL replay file. That separation gives the repository a testable detection-development workflow even when CI cannot start privileged ETW sessions.
+The engine does not execute payloads, inspect remote process memory, inject code, terminate processes or modify the endpoint. Findings are analyst triage signals, not malware verdicts.
+
+Live ETW events and replayed events use the same detection function, which keeps rule behavior testable and deterministic.
 
 ## Recording and replay
 
-Every normalized event can be written as one JSON object per line. Findings can be written to the same stream. The built-in replay command ignores non-event lines and re-runs the current detection rules over historical normalized events.
+`src/jsonl.c` serializes normalized events/findings into a flat JSONL contract using a bounded output buffer. The replay reader intentionally implements only that documented TraceGuard event shape rather than a general JSON parser.
 
 ```text
-capture -> normalized JSONL -> new rule -> replay -> compare findings
+capture -> normalized JSONL -> rule change -> replay -> compare findings
 ```
+
+The separation lets CI test detections without requiring permissions to start a realtime trace session.
+
+## Capture timeout
+
+The CLI uses a Win32 event plus `CreateThread` for the bounded capture timer. The timer calls the normal session-stop function when the requested interval expires. No C++ threading/runtime layer is involved.
 
 ## Trust boundaries
 
-The parser treats ETW property data and replay files as untrusted input. Size checks are applied before allocations, unknown or missing properties are tolerated, JSON replay parsing is limited to the flat v1 schema, and the sensor performs no automatic remediation.
+ETW property payloads and replay files are untrusted input.
+
+The design therefore uses:
+
+- capped TDH property allocation;
+- bounded normalized fields;
+- checked wide/narrow-to-UTF-8 conversions;
+- bounded JSON output;
+- narrow replay parsing;
+- explicit process-table capacity;
+- explicit handle/allocation cleanup;
+- no automatic remediation.
+
+## Build-language invariant
+
+CMake declares `LANGUAGES C` and `CMAKE_C_STANDARD 11`. CI additionally searches the repository for `.cpp`, `.cc`, `.cxx`, `.hpp` and `.hh` files and fails if any are present. The pure-C property is therefore tested, not merely documented.

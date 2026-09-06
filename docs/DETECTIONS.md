@@ -20,14 +20,23 @@ For example, `TG1001` is intentionally framed as *execution from a user-writable
 
 ## Parent/child correlation
 
-`TG1002` uses either the parent image supplied in replay data or the in-memory parent PID map built from previous process-start events. This demonstrates stateful detection without requiring a database.
+`TG1002` uses either the parent image supplied in replay data or the in-memory parent PID table built from previous process-start events. Process-stop telemetry removes stale entries. This demonstrates stateful detection in plain C without requiring a database.
 
-## Adding a rule
+## Rule implementation
 
-Rules live in `src/rule_engine.cpp`. A new rule should:
+Rules live in `src/rule_engine.c` and consume only normalized `TgEvent` fields. ETW/TDH types are deliberately kept out of this layer.
+
+`tg_rule_engine_evaluate()` writes findings into a caller-provided bounded array, which keeps ownership simple and avoids hidden allocations on every event.
+
+A new rule should:
 
 1. operate on normalized fields rather than ETW internals;
 2. have a stable rule ID;
 3. include severity, title and a plain-language rationale;
 4. avoid claiming compromise from a single weak indicator;
-5. include at least one positive and one negative unit test.
+5. include positive regression coverage and, where useful, a benign/negative control;
+6. preserve the read-only defensive boundary.
+
+## Current regression coverage
+
+The C11 test executable covers every built-in rule (`TG1001`–`TG1006`, `TG2001`), a benign Notepad control, JSON event round-trip behavior, parent correlation and process-stop cleanup.
