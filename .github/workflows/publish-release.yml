@@ -20,11 +20,11 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TARGET_SHA: ${{ github.event.before }}
+          TARGET_SHA: ae4fa897e4bba8a3d7ce9e87d412c9ff093a4688
         run: |
           tag="v1.0.1"
           if ! git rev-parse "$tag" >/dev/null 2>&1; then
-            git tag -a "$tag" "$TARGET_SHA" -m "Win-TraceGuard v1.0.1"
+            git tag "$tag" "$TARGET_SHA"
             git push origin "$tag"
           fi
           if ! gh release view "$tag" >/dev/null 2>&1; then
